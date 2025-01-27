@@ -7,4 +7,5 @@ type Task struct {
 	Name        string
 	Description string
 	Completed   bool
-}
+	UserId      int
+} //Структура для взаимодействия с БД

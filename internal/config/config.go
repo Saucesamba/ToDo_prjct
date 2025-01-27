@@ -29,7 +29,7 @@ type Config struct {
 
 func LoadConfig() (*Config, error) {
 	cfg := &Config{}
-	err := godotenv.Load()
+	err := godotenv.Load() // загрузка из окружения
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
