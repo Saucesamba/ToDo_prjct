@@ -30,6 +30,7 @@ func main() {
 		Email:    "first@email.com",
 	}
 	firstUserId, err := db.CreateUser(dbConn, firstUser)
+
 	if err != nil {
 		fmt.Printf("Failed to create first user: %v", err)
 	} else {
