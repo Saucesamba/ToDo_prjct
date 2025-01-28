@@ -3,9 +3,9 @@ package main
 import (
 	"MyProject/internal/config"
 	"MyProject/internal/db"
-	"MyProject/internal/models"
-	"fmt"
+	"MyProject/internal/handlers"
 	"log"
+	"net/http"
 )
 
 func main() {
@@ -24,37 +24,12 @@ func main() {
 			log.Printf("failed to close db connection: %v", err)
 		}
 	}()
-	firstUser := &models.User{
-		Name:     "First User",
-		Password: "123456",
-		Email:    "first@email.com",
-	}
-	firstUserId, err := db.CreateUser(dbConn, firstUser)
 
+	var handler = handlers.NewHandler(*dbConn)
+	http.HandleFunc("/register", handler.HandleUserRegister)
+	http.HandleFunc("/login", handler.HandleUserLogin)
+	err = http.ListenAndServe(":8080", nil)
 	if err != nil {
-		fmt.Printf("Failed to create first user: %v", err)
-	} else {
-		fmt.Printf("Created first user: %v", firstUserId)
-	}
-
-	newTask := &models.Task{
-		Name:        "Починить стул",
-		Description: "Очень важное дело",
-		Completed:   false}
-
-	taskId, err := db.CreateTask(dbConn, newTask, firstUser)
-	if err != nil {
-		log.Fatalf("failed to create task: %v", err)
-	} else {
-		log.Printf("task created: %v", taskId)
-	}
-
-	tasks, err := db.GetAllTasks(dbConn, firstUser)
-	if err != nil {
-		log.Fatalf("failed to get all tasks: %v", err)
-	} else {
-		for _, task := range tasks {
-			log.Printf("task: %v", task.Id, task.Name)
-		}
+		log.Fatalf("failed to start server: %v", err)
 	}
 }
