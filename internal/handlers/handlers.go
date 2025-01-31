@@ -6,6 +6,7 @@ import (
 	"MyProject/internal/models"
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -46,6 +47,7 @@ func (h *Handler) HandleUserRegister(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	createdUser, err := app.RegistrUser(&h.Repo, user.Email, user.Name, user.Password)
+
 	if err != nil {
 		http.Error(w, "Unable to register user", http.StatusInternalServerError)
 		return
@@ -58,8 +60,6 @@ func (h *Handler) HandleUserRegister(w http.ResponseWriter, r *http.Request) {
 		Email: createdUser.Email,
 	})
 }
-
-// при логине возвращаем Id, Email, Name
 func (h *Handler) HandleUserLogin(w http.ResponseWriter, r *http.Request) {
 	log.Println("Method", r.Method)
 	log.Println("Url", r.URL)
@@ -78,12 +78,13 @@ func (h *Handler) HandleUserLogin(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Unable to read request body", http.StatusBadRequest)
 	}
 	var user models.UserLoginJSON
+
 	err = json.Unmarshal(body, &user)
 	if err != nil {
 		http.Error(w, "Unable to unmarshal JSON", http.StatusBadRequest)
 	}
-
 	loginUser, err := app.AuthUser(&h.Repo, user.Email, user.Password)
+
 	if err != nil {
 		http.Error(w, "Unable to login", http.StatusUnauthorized)
 	}
@@ -98,9 +99,11 @@ func (h *Handler) HandleUserLogin(w http.ResponseWriter, r *http.Request) {
 }
 
 // хэндлер для обновлении информации о пользователе, возвращает измененные данные если все прошло хорошо
-// PUT method?
 
 func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request, id int) {
+	log.Println("Method", r.Method)
+	fmt.Println("Url", r.URL, "piska")
+
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "Unable to read request body", http.StatusBadRequest)
@@ -125,6 +128,8 @@ func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request, id int) {
 }
 
 func (h *Handler) GetInfo(w http.ResponseWriter, r *http.Request, id int) {
+	log.Println("Method", r.Method)
+	log.Println("Url", r.URL, "getinfo")
 	user, err := app.GetInfoUser(&h.Repo, id)
 	if err != nil {
 		http.Error(w, "Unable to find user", http.StatusNotFound)

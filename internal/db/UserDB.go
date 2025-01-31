@@ -14,7 +14,7 @@ import (
 )
 
 func CreateUser(db *sql.DB, user *models.User) (int, error) {
-	query := "INSERT INTO users (name, password, email) values ($1, $2, $3)"
+	query := "INSERT INTO users (name, password, email) values ($1, $2, $3) RETURNING id"
 	var id int
 	err := db.QueryRow(query, user.Name, user.Password, user.Email).Scan(&id)
 	if err != nil {
@@ -22,6 +22,7 @@ func CreateUser(db *sql.DB, user *models.User) (int, error) {
 	}
 	return id, nil
 }
+
 func GetUserById(db *sql.DB, id int) (models.User, error) {
 	var user models.User
 	query := "SELECT * FROM users WHERE id=$1"
