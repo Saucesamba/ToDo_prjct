@@ -7,7 +7,8 @@ type User struct {
 	Password string
 }
 
-type UserRegisterJSON struct {
+type UserJSON struct {
+	Id       int    `json:"id"`
 	Name     string `json:"name"`
 	Email    string `json:"email"`
 	Password string `json:"password"`

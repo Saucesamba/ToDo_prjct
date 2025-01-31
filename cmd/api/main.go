@@ -6,6 +6,7 @@ import (
 	"MyProject/internal/handlers"
 	"log"
 	"net/http"
+	"strings"
 )
 
 func main() {
@@ -26,8 +27,16 @@ func main() {
 	}()
 
 	var handler = handlers.NewHandler(*dbConn)
-	http.HandleFunc("/register", handler.HandleUserRegister)
-	http.HandleFunc("/login", handler.HandleUserLogin)
+	http.HandleFunc("users/register", handler.HandleUserRegister)
+	http.HandleFunc("/users/login", handler.HandleUserLogin)
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasPrefix(r.URL.Path, "/users/") {
+			handler.UserInfoHandler(w, r)
+			return
+		}
+		http.NotFound(w, r)
+	})
+
 	err = http.ListenAndServe(":8080", nil)
 	if err != nil {
 		log.Fatalf("failed to start server: %v", err)

@@ -7,7 +7,10 @@ import (
 	"database/sql"
 	"encoding/json"
 	"io"
+	"log"
 	"net/http"
+	"strconv"
+	"strings"
 )
 
 type Handler struct {
@@ -19,6 +22,14 @@ func NewHandler(repo sql.DB) *Handler {
 }
 
 func (h *Handler) HandleUserRegister(w http.ResponseWriter, r *http.Request) {
+	log.Println("Method", r.Method)
+	log.Println("Url", r.URL)
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	if r.Method == http.MethodOptions {
+		return
+	}
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
@@ -28,7 +39,7 @@ func (h *Handler) HandleUserRegister(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Unable to read request body", http.StatusBadRequest)
 		return
 	}
-	var user models.UserRegisterJSON
+	var user models.UserJSON
 	err = json.Unmarshal(body, &user)
 	if err != nil {
 		http.Error(w, "Unable to unmarshal JSON", http.StatusBadRequest)
@@ -48,8 +59,17 @@ func (h *Handler) HandleUserRegister(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// при логине возвращаем Id, Email, Name
 func (h *Handler) HandleUserLogin(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
+	log.Println("Method", r.Method)
+	log.Println("Url", r.URL)
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	if r.Method == http.MethodOptions {
+		return
+	}
+	if r.Method != http.MethodPut {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
@@ -75,4 +95,76 @@ func (h *Handler) HandleUserLogin(w http.ResponseWriter, r *http.Request) {
 		Name:  loginUser.Name,
 		Email: loginUser.Email,
 	})
+}
+
+// хэндлер для обновлении информации о пользователе, возвращает измененные данные если все прошло хорошо
+// PUT method?
+
+func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request, id int) {
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Unable to read request body", http.StatusBadRequest)
+	}
+	var userReq models.UserJSON
+	err = json.Unmarshal(body, &userReq)
+	if err != nil {
+		http.Error(w, "Unable to unmarshal JSON", http.StatusBadRequest)
+	}
+	var user models.User = models.User{Email: userReq.Email, Name: userReq.Name, Password: userReq.Password, Id: id}
+	err = app.UpdateUser(&h.Repo, user)
+	if err != nil {
+		http.Error(w, "Unable to update user", http.StatusInternalServerError)
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(models.UserResponseJSON{
+		Id:    user.Id,
+		Name:  user.Name,
+		Email: user.Email,
+	})
+}
+
+func (h *Handler) GetInfo(w http.ResponseWriter, r *http.Request, id int) {
+	user, err := app.GetInfoUser(&h.Repo, id)
+	if err != nil {
+		http.Error(w, "Unable to find user", http.StatusNotFound)
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(user)
+	json.NewEncoder(w).Encode(models.UserResponseJSON{
+		Id:    user.Id,
+		Name:  user.Name,
+		Email: user.Email,
+	})
+}
+
+// хендлер для изменения и получения инфы о пользователе
+func (h *Handler) UserInfoHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	if r.Method == http.MethodOptions {
+		return
+	}
+
+	parts := strings.Split(r.URL.Path, "/")
+	if len(parts) < 4 && parts[1] != "users" {
+		http.Error(w, "Invalid path", http.StatusBadRequest)
+		return
+	}
+	idStr := parts[2]
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "Invalid id", http.StatusBadRequest)
+		return
+	}
+	switch r.Method {
+	case http.MethodGet:
+		h.GetInfo(w, r, id)
+	case http.MethodPut:
+		h.UpdateUser(w, r, id)
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
 }

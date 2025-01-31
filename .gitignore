@@ -2,3 +2,4 @@
 tasks.md
 *.env
 db-script.txt
+frontend/
