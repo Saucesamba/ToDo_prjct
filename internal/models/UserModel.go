@@ -13,6 +13,7 @@ type UserJSON struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
+
 type UserLoginJSON struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
@@ -23,6 +24,7 @@ type UserResponseJSON struct {
 	Name  string `json:"name"`
 	Email string `json:"email"`
 }
+
 type UpdatePasswordJSON struct {
 	Password string `json:"password"`
 }

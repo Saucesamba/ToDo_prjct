@@ -102,18 +102,20 @@ func (h *Handler) HandleUserLogin(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request, id int) {
 	log.Println("Method", r.Method)
-	fmt.Println("Url", r.URL, "piska")
+	fmt.Println("Url", r.URL, "updateInfo")
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "Unable to read request body", http.StatusBadRequest)
 	}
+
 	var userReq models.UserJSON
 	err = json.Unmarshal(body, &userReq)
 	if err != nil {
 		http.Error(w, "Unable to unmarshal JSON", http.StatusBadRequest)
 	}
 	var user models.User = models.User{Email: userReq.Email, Name: userReq.Name, Password: userReq.Password, Id: id}
+	log.Println(user)
 	err = app.UpdateUser(&h.Repo, user)
 	if err != nil {
 		http.Error(w, "Unable to update user", http.StatusInternalServerError)
@@ -129,14 +131,15 @@ func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request, id int) {
 
 func (h *Handler) GetInfo(w http.ResponseWriter, r *http.Request, id int) {
 	log.Println("Method", r.Method)
-	log.Println("Url", r.URL, "getinfo")
+	log.Println("Url", r.URL, "getInfo")
+
 	user, err := app.GetInfoUser(&h.Repo, id)
+	log.Println(user)
 	if err != nil {
 		http.Error(w, "Unable to find user", http.StatusNotFound)
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(user)
 	json.NewEncoder(w).Encode(models.UserResponseJSON{
 		Id:    user.Id,
 		Name:  user.Name,
@@ -154,7 +157,7 @@ func (h *Handler) UserInfoHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	parts := strings.Split(r.URL.Path, "/")
-	if len(parts) < 4 && parts[1] != "users" {
+	if parts[1] != "users" {
 		http.Error(w, "Invalid path", http.StatusBadRequest)
 		return
 	}
