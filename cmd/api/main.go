@@ -38,6 +38,7 @@ func main() {
 		}
 		http.NotFound(w, r)
 	})
+
 	log.Println("Server started on port 8080")
 	err = http.ListenAndServe(":8080", nil)
 	if err != nil {

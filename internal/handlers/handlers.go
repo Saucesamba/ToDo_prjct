@@ -6,7 +6,6 @@ import (
 	"MyProject/internal/models"
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -23,8 +22,8 @@ func NewHandler(repo sql.DB) *Handler {
 }
 
 func (h *Handler) HandleUserRegister(w http.ResponseWriter, r *http.Request) {
-	log.Println("Method", r.Method)
-	log.Println("Url", r.URL)
+	log.Println("Method: ", r.Method, " Url: ", r.URL, " UserRegister")
+
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
@@ -61,8 +60,8 @@ func (h *Handler) HandleUserRegister(w http.ResponseWriter, r *http.Request) {
 	})
 }
 func (h *Handler) HandleUserLogin(w http.ResponseWriter, r *http.Request) {
-	log.Println("Method", r.Method)
-	log.Println("Url", r.URL)
+	log.Println("Method: ", r.Method, " Url: ", r.URL, " UserLogin")
+
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
@@ -83,27 +82,23 @@ func (h *Handler) HandleUserLogin(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, "Unable to unmarshal JSON", http.StatusBadRequest)
 	}
+
 	loginUser, err := app.AuthUser(&h.Repo, user.Email, user.Password)
 
 	if err != nil {
 		http.Error(w, "Unable to login", http.StatusUnauthorized)
+	} else {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(models.UserResponseJSON{
+			Id:    loginUser.Id,
+			Name:  loginUser.Name,
+			Email: loginUser.Email,
+		})
 	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(models.UserResponseJSON{
-		Id:    loginUser.Id,
-		Name:  loginUser.Name,
-		Email: loginUser.Email,
-	})
 }
-
-// хэндлер для обновлении информации о пользователе, возвращает измененные данные если все прошло хорошо
-
 func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request, id int) {
-	log.Println("Method", r.Method)
-	fmt.Println("Url", r.URL, "updateInfo")
-
+	log.Println("Method: ", r.Method, " Url: ", r.URL, " updateInfo")
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "Unable to read request body", http.StatusBadRequest)
@@ -115,7 +110,6 @@ func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request, id int) {
 		http.Error(w, "Unable to unmarshal JSON", http.StatusBadRequest)
 	}
 	var user models.User = models.User{Email: userReq.Email, Name: userReq.Name, Password: userReq.Password, Id: id}
-	log.Println(user)
 	err = app.UpdateUser(&h.Repo, user)
 	if err != nil {
 		http.Error(w, "Unable to update user", http.StatusInternalServerError)
@@ -128,10 +122,8 @@ func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request, id int) {
 		Email: user.Email,
 	})
 }
-
 func (h *Handler) GetInfo(w http.ResponseWriter, r *http.Request, id int) {
-	log.Println("Method", r.Method)
-	log.Println("Url", r.URL, "getInfo")
+	log.Println("Method: ", r.Method, " Url: ", r.URL, " getInfo")
 
 	user, err := app.GetInfoUser(&h.Repo, id)
 	log.Println(user)
@@ -146,8 +138,6 @@ func (h *Handler) GetInfo(w http.ResponseWriter, r *http.Request, id int) {
 		Email: user.Email,
 	})
 }
-
-// хендлер для изменения и получения инфы о пользователе
 func (h *Handler) UserInfoHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
