@@ -31,6 +31,8 @@ func main() {
 
 	http.HandleFunc("/users/login", handler.HandleUserLogin)
 
+	http.HandleFunc("/tasks", handler.TasksHandler) //ручка для тасков
+
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if strings.HasPrefix(r.URL.Path, "/users/") {
 			handler.UserInfoHandler(w, r)

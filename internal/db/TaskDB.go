@@ -9,10 +9,10 @@ import (
 
 // Функция для создания задачи пользователю. На вход ID пользователя, а также параметры задачи.
 // На выходе id созданной задачи
-func CreateTask(db *sql.DB, task *models.Task, user *models.User) (int, error) {
+func CreateTask(db *sql.DB, task *models.Task, userId int) (int, error) {
 	query := "INSERT INTO tasks (name, description,completed,user_id) VALUES ($1, $2, $3, $4) returning id"
 	var id int
-	err := db.QueryRow(query, task.Name, task.Description, task.Completed, user.Id).Scan(&id)
+	err := db.QueryRow(query, task.Name, task.Description, task.Completed, userId).Scan(&id)
 	if err != nil {
 		return 0, fmt.Errorf("failed to create task: %w", err)
 	}

@@ -9,6 +9,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 )
@@ -103,7 +104,7 @@ func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request, id int) {
 	if err != nil {
 		http.Error(w, "Unable to read request body", http.StatusBadRequest)
 	}
-
+	log.Println(body)
 	var userReq models.UserJSON
 	err = json.Unmarshal(body, &userReq)
 	if err != nil {
@@ -147,6 +148,7 @@ func (h *Handler) UserInfoHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	parts := strings.Split(r.URL.Path, "/")
+	//log.Println(parts)
 	if parts[1] != "users" {
 		http.Error(w, "Invalid path", http.StatusBadRequest)
 		return
@@ -164,5 +166,96 @@ func (h *Handler) UserInfoHandler(w http.ResponseWriter, r *http.Request) {
 		h.UpdateUser(w, r, id)
 	default:
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
+func (h *Handler) GetTasks(w http.ResponseWriter, r *http.Request, params url.Values) {
+	//на будущее тут будет фильрация и пагинация тасков
+
+	userId := params.Get("userId")
+	if userId == "" {
+		http.Error(w, "Missing user id", http.StatusBadRequest)
+		return
+	}
+	userIdInt, err := strconv.Atoi(userId)
+	if err != nil {
+		http.Error(w, "Invalid id", http.StatusBadRequest)
+		return
+	}
+
+	filter := params.Get("filter")
+	log.Println(filter, userIdInt)
+
+	tasks, err := app.GetUserTasks(&h.Repo, userIdInt)
+	var taskResp []models.TaskResponse
+	for _, task := range tasks {
+		taskResp = append(taskResp, models.TaskResponse{Id: task.Id, Description: task.Description, Name: task.Name, Completed: task.Completed})
+	}
+	if err != nil {
+		http.Error(w, "Unable to find tasks", http.StatusInternalServerError)
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(taskResp)
+}
+
+func (h *Handler) CreateTask(w http.ResponseWriter, r *http.Request, userId int) {
+	log.Println("Method: ", r.Method, " Url: ", r.URL, " CreateTask")
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Unable to read request body", http.StatusBadRequest)
+	}
+	var task models.TaskReq
+	err = json.Unmarshal(body, &task)
+	if err != nil {
+		http.Error(w, "Unable to unmarshal JSON", http.StatusBadRequest)
+	}
+
+	var newTask models.Task
+	newTask.Description = task.Description
+	newTask.Name = task.Name
+	newTask.UserId = userId
+	newTask.Completed = false
+
+	err = app.CreateTask(&h.Repo, newTask, userId)
+	if err != nil {
+		http.Error(w, "Unable to create task", http.StatusInternalServerError)
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	var respTask = models.TaskResponse{Id: newTask.Id, Description: newTask.Description, Name: newTask.Name, Completed: newTask.Completed}
+	json.NewEncoder(w).Encode(respTask)
+}
+
+func (h *Handler) TasksHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	if r.Method == http.MethodOptions {
+		return
+	}
+
+	//if r.Method != http.MethodGet {
+	//	http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	//	return
+	//}
+
+	params := r.URL.Query()
+	userId := params.Get("userId")
+	if userId == "" {
+		http.Error(w, "Missing user id", http.StatusBadRequest)
+		return
+	}
+	userIdInt, err := strconv.Atoi(userId)
+	if err != nil {
+		http.Error(w, "Invalid id", http.StatusBadRequest)
+		return
+	}
+
+	switch r.Method {
+	case http.MethodGet:
+		h.GetTasks(w, r, params)
+	case http.MethodPost:
+		h.CreateTask(w, r, userIdInt)
 	}
 }
