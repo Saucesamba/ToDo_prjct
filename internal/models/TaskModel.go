@@ -10,14 +10,17 @@ type Task struct {
 	UserId      int
 } //Структура для взаимодействия с БД
 
-type TaskResponse struct {
-	Id          int
-	Name        string
-	Description string
-	Completed   bool
+type OneTaskResponse struct {
+	Id          int    `json:"id"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Completed   bool   `json:"completed"`
+}
+type UsertasksResp struct {
+	Tasks []OneTaskResponse `json:"tasks"`
 }
 
 type TaskReq struct {
-	Name        string
-	Description string
+	Name        string `json:"name"`
+	Description string `json:"description"`
 }

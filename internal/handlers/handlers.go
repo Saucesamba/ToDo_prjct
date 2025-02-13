@@ -40,6 +40,7 @@ func (h *Handler) HandleUserRegister(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Unable to read request body", http.StatusBadRequest)
 		return
 	}
+
 	var user models.UserJSON
 	err = json.Unmarshal(body, &user)
 	if err != nil {
@@ -60,6 +61,7 @@ func (h *Handler) HandleUserRegister(w http.ResponseWriter, r *http.Request) {
 		Email: createdUser.Email,
 	})
 }
+
 func (h *Handler) HandleUserLogin(w http.ResponseWriter, r *http.Request) {
 	log.Println("Method: ", r.Method, " Url: ", r.URL, " UserLogin")
 
@@ -171,7 +173,7 @@ func (h *Handler) UserInfoHandler(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) GetTasks(w http.ResponseWriter, r *http.Request, params url.Values) {
 	//на будущее тут будет фильрация и пагинация тасков
-
+	log.Println("Method: ", r.Method, " Url: ", r.URL, "GetAllTasks")
 	userId := params.Get("userId")
 	if userId == "" {
 		http.Error(w, "Missing user id", http.StatusBadRequest)
@@ -183,13 +185,13 @@ func (h *Handler) GetTasks(w http.ResponseWriter, r *http.Request, params url.Va
 		return
 	}
 
-	filter := params.Get("filter")
-	log.Println(filter, userIdInt)
+	//filter := params.Get("filter")
+	//log.Println(filter, userIdInt)
 
 	tasks, err := app.GetUserTasks(&h.Repo, userIdInt)
-	var taskResp []models.TaskResponse
+	var taskResp []models.OneTaskResponse
 	for _, task := range tasks {
-		taskResp = append(taskResp, models.TaskResponse{Id: task.Id, Description: task.Description, Name: task.Name, Completed: task.Completed})
+		taskResp = append(taskResp, models.OneTaskResponse{Id: task.Id, Description: task.Description, Name: task.Name, Completed: task.Completed})
 	}
 	if err != nil {
 		http.Error(w, "Unable to find tasks", http.StatusInternalServerError)
@@ -200,6 +202,7 @@ func (h *Handler) GetTasks(w http.ResponseWriter, r *http.Request, params url.Va
 }
 
 func (h *Handler) CreateTask(w http.ResponseWriter, r *http.Request, userId int) {
+
 	log.Println("Method: ", r.Method, " Url: ", r.URL, " CreateTask")
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -223,7 +226,7 @@ func (h *Handler) CreateTask(w http.ResponseWriter, r *http.Request, userId int)
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	var respTask = models.TaskResponse{Id: newTask.Id, Description: newTask.Description, Name: newTask.Name, Completed: newTask.Completed}
+	var respTask = models.OneTaskResponse{Id: newTask.Id, Description: newTask.Description, Name: newTask.Name, Completed: newTask.Completed}
 	json.NewEncoder(w).Encode(respTask)
 }
 
