@@ -64,7 +64,6 @@ func DeleteUser(data *sql.DB, id int) error {
 	return nil
 }
 
-// получение всех задач пользователя
 func GetUserTasks(data *sql.DB, id int) ([]models.Task, error) {
 	tasks, err := db.GetAllTasks(data, id)
 	if err != nil {
@@ -72,7 +71,6 @@ func GetUserTasks(data *sql.DB, id int) ([]models.Task, error) {
 	}
 	return tasks, nil
 }
-
 func CreateTask(data *sql.DB, task models.Task, userId int) error {
 	id, err := db.CreateTask(data, &task, userId)
 	task.Id = id
@@ -80,4 +78,41 @@ func CreateTask(data *sql.DB, task models.Task, userId int) error {
 		fmt.Errorf("failed to create task: %v", err)
 	}
 	return nil
+}
+func DeleteTask(data *sql.DB, id int) error {
+	err := db.DeleteTask(data, id)
+	if err != nil {
+		fmt.Errorf("failed to delete task: %v", err)
+	}
+	return nil
+}
+func UpdateTaskStatus(data *sql.DB, id int) error {
+	task, err := db.GetTaskById(data, id)
+	if err != nil {
+		fmt.Errorf("failed to fetch task: %v", err)
+	}
+	if !task.Completed {
+		task.Completed = true
+	} else {
+		task.Completed = false
+	}
+	err = db.UpdateTask(data, task)
+	if err != nil {
+		fmt.Errorf("failed to update task: %v", err)
+	}
+	return nil
+}
+func GetTaskStat(data *sql.DB, id int) (models.UserTaskInfo, error) {
+	tasks, err := db.GetAllTasks(data, id)
+	if err != nil {
+		fmt.Errorf("failed to fetch tasks: %v", err)
+	}
+	var res models.UserTaskInfo
+	for _, task := range tasks {
+		if task.Completed == true {
+			res.CompletedCount++
+		}
+	}
+	res.TaskCount = len(tasks)
+	return res, nil
 }

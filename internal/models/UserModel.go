@@ -20,11 +20,13 @@ type UserLoginJSON struct {
 }
 
 type UserResponseJSON struct {
-	Id    int    `json:"id"`
-	Name  string `json:"name"`
-	Email string `json:"email"`
+	Id       int          `json:"id"`
+	Name     string       `json:"name"`
+	Email    string       `json:"email"`
+	TaskStat UserTaskInfo `json:"task_stat"`
 }
 
-type UpdatePasswordJSON struct {
-	Password string `json:"password"`
+type UserTaskInfo struct {
+	TaskCount      int `json:"task_count"`
+	CompletedCount int `json:"completed_count"`
 }

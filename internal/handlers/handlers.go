@@ -56,12 +56,12 @@ func (h *Handler) HandleUserRegister(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(models.UserResponseJSON{
-		Id:    createdUser.Id,
-		Name:  createdUser.Name,
-		Email: createdUser.Email,
+		Id:       createdUser.Id,
+		Name:     createdUser.Name,
+		Email:    createdUser.Email,
+		TaskStat: models.UserTaskInfo{CompletedCount: 0, TaskCount: 0},
 	})
 }
-
 func (h *Handler) HandleUserLogin(w http.ResponseWriter, r *http.Request) {
 	log.Println("Method: ", r.Method, " Url: ", r.URL, " UserLogin")
 
@@ -87,16 +87,17 @@ func (h *Handler) HandleUserLogin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	loginUser, err := app.AuthUser(&h.Repo, user.Email, user.Password)
-
 	if err != nil {
 		http.Error(w, "Unable to login", http.StatusUnauthorized)
 	} else {
+		taskStat, _ := app.GetTaskStat(&h.Repo, loginUser.Id)
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(models.UserResponseJSON{
-			Id:    loginUser.Id,
-			Name:  loginUser.Name,
-			Email: loginUser.Email,
+			Id:       loginUser.Id,
+			Name:     loginUser.Name,
+			Email:    loginUser.Email,
+			TaskStat: taskStat,
 		})
 	}
 }
@@ -106,7 +107,6 @@ func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request, id int) {
 	if err != nil {
 		http.Error(w, "Unable to read request body", http.StatusBadRequest)
 	}
-	log.Println(body)
 	var userReq models.UserJSON
 	err = json.Unmarshal(body, &userReq)
 	if err != nil {
@@ -119,26 +119,28 @@ func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request, id int) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
+	taskStat, _ := app.GetTaskStat(&h.Repo, id)
 	json.NewEncoder(w).Encode(models.UserResponseJSON{
-		Id:    user.Id,
-		Name:  user.Name,
-		Email: user.Email,
+		Id:       user.Id,
+		Name:     user.Name,
+		Email:    user.Email,
+		TaskStat: taskStat,
 	})
 }
 func (h *Handler) GetInfo(w http.ResponseWriter, r *http.Request, id int) {
 	log.Println("Method: ", r.Method, " Url: ", r.URL, " getInfo")
-
 	user, err := app.GetInfoUser(&h.Repo, id)
-	log.Println(user)
 	if err != nil {
 		http.Error(w, "Unable to find user", http.StatusNotFound)
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
+	taskStat, _ := app.GetTaskStat(&h.Repo, id)
 	json.NewEncoder(w).Encode(models.UserResponseJSON{
-		Id:    user.Id,
-		Name:  user.Name,
-		Email: user.Email,
+		Id:       user.Id,
+		Name:     user.Name,
+		Email:    user.Email,
+		TaskStat: taskStat,
 	})
 }
 func (h *Handler) UserInfoHandler(w http.ResponseWriter, r *http.Request) {
@@ -148,9 +150,7 @@ func (h *Handler) UserInfoHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodOptions {
 		return
 	}
-
 	parts := strings.Split(r.URL.Path, "/")
-	//log.Println(parts)
 	if parts[1] != "users" {
 		http.Error(w, "Invalid path", http.StatusBadRequest)
 		return
@@ -189,18 +189,22 @@ func (h *Handler) GetTasks(w http.ResponseWriter, r *http.Request, params url.Va
 	//log.Println(filter, userIdInt)
 
 	tasks, err := app.GetUserTasks(&h.Repo, userIdInt)
-	var taskResp []models.OneTaskResponse
-	for _, task := range tasks {
-		taskResp = append(taskResp, models.OneTaskResponse{Id: task.Id, Description: task.Description, Name: task.Name, Completed: task.Completed})
+	if len(tasks) == 0 {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(models.UsertasksResp{})
+	} else {
+		var taskResp []models.OneTaskResponse
+		for _, task := range tasks {
+			taskResp = append(taskResp, models.OneTaskResponse{Id: task.Id, Description: task.Description, Name: task.Name, Completed: task.Completed})
+		}
+		if err != nil {
+			http.Error(w, "Unable to find tasks", http.StatusInternalServerError)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(taskResp)
 	}
-	if err != nil {
-		http.Error(w, "Unable to find tasks", http.StatusInternalServerError)
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(taskResp)
 }
-
 func (h *Handler) CreateTask(w http.ResponseWriter, r *http.Request, userId int) {
 
 	log.Println("Method: ", r.Method, " Url: ", r.URL, " CreateTask")
@@ -229,7 +233,6 @@ func (h *Handler) CreateTask(w http.ResponseWriter, r *http.Request, userId int)
 	var respTask = models.OneTaskResponse{Id: newTask.Id, Description: newTask.Description, Name: newTask.Name, Completed: newTask.Completed}
 	json.NewEncoder(w).Encode(respTask)
 }
-
 func (h *Handler) TasksHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
@@ -237,11 +240,6 @@ func (h *Handler) TasksHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodOptions {
 		return
 	}
-
-	//if r.Method != http.MethodGet {
-	//	http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-	//	return
-	//}
 
 	params := r.URL.Query()
 	userId := params.Get("userId")
@@ -255,10 +253,20 @@ func (h *Handler) TasksHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	taskId := params.Get("taskId")
+	taskIdInt, _ := strconv.Atoi(taskId)
 	switch r.Method {
 	case http.MethodGet:
 		h.GetTasks(w, r, params)
 	case http.MethodPost:
 		h.CreateTask(w, r, userIdInt)
+	case http.MethodPut:
+		log.Println("Updating task", taskIdInt, userIdInt)
+		app.UpdateTaskStatus(&h.Repo, taskIdInt)
+	case http.MethodDelete:
+		log.Println("Deleted task", taskIdInt, userIdInt)
+		app.DeleteTask(&h.Repo, taskIdInt)
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
 }

@@ -45,26 +45,24 @@ func GetAllTasks(db *sql.DB, id int) ([]models.Task, error) {
 
 // получение таски по Id
 // На выходе задача пользователя или ошибка
-func GetTaskById(db *sql.DB, id, userId int) (*models.Task, error) {
-	query := "SELECT * FROM tasks WHERE id = $1; user_id = $2;"
-	row := db.QueryRow(query, id, userId)
-
+func GetTaskById(db *sql.DB, id int) (*models.Task, error) {
+	query := "SELECT * FROM tasks WHERE id = $1;"
+	row := db.QueryRow(query, id)
 	task := &models.Task{}
-	err := row.Scan(&task.Id, &task.Name, &task.Description, &task.Completed)
+	err := row.Scan(&task.Id, &task.Name, &task.Description, &task.Completed, &task.UserId)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
 		}
 		return nil, fmt.Errorf("failed to scan task with Id: %w", err)
 	}
-	task.UserId = userId
 	return task, nil
 }
 
 // обновление в БД
 func UpdateTask(db *sql.DB, task *models.Task) error {
-	query := "UPDATE tasks SET name = $1, description = $2, completed = $3 WHERE id = $4"
-	_, err := db.Exec(query, task.Name, task.Description, task.Completed, task.Id)
+	query := "UPDATE tasks SET completed = $1 WHERE id = $2"
+	_, err := db.Exec(query, task.Completed, task.Id)
 	if err != nil {
 		return fmt.Errorf("error updating task: %w", err)
 	}
