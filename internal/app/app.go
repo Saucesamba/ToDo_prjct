@@ -6,7 +6,77 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log"
 )
+
+func filterTasks(tasks []models.Task, filter string) []models.Task {
+	if filter == "" {
+		return tasks
+	}
+	var f bool
+	if filter == "true" {
+		f = true
+	} else if filter == "false" {
+		f = false
+	} else {
+		fmt.Errorf("Filter ircorrect")
+	}
+	var res []models.Task
+	for _, task := range tasks {
+		if task.Completed == f {
+			res = append(res, task)
+		}
+	}
+	return res
+}
+
+func mergeSort(tasks []models.Task, sort string) []models.Task {
+	if len(tasks) < 2 {
+		return tasks
+	}
+	mid := len(tasks) / 2
+	left := tasks[:mid]
+	right := tasks[mid:]
+	return merge(mergeSort(left, sort), mergeSort(right, sort), sort)
+}
+func merge(left []models.Task, right []models.Task, sort string) []models.Task {
+	var li, ri = 0, 0
+	var res []models.Task
+	for li < len(left) || ri < len(right) {
+		switch sort {
+		case "asc":
+			{
+				if right[ri].CreatedAt.After(left[li].CreatedAt) {
+					res = append(res, left[li])
+					li++
+				} else {
+					res = append(res, right[ri])
+					ri++
+				}
+			}
+
+		case "dec":
+			{
+				if left[li].CreatedAt.After(right[ri].CreatedAt) {
+					res = append(res, left[li])
+					li++
+				} else {
+					res = append(res, right[ri])
+					ri++
+				}
+			}
+		}
+	}
+	for li < len(left) {
+		res = append(res, left[li])
+		li++
+	}
+	for ri < len(right) {
+		res = append(res, right[ri])
+		ri++
+	}
+	return res
+}
 
 func RegistrUser(data *sql.DB, email, name, password string) (models.User, error) {
 	if email == "" || password == "" || name == "" {
@@ -64,13 +134,21 @@ func DeleteUser(data *sql.DB, id int) error {
 	return nil
 }
 
-func GetUserTasks(data *sql.DB, id int) ([]models.Task, error) {
+func GetUserTasks(data *sql.DB, id int, sort, filter string) ([]models.Task, error) {
 	tasks, err := db.GetAllTasks(data, id)
 	if err != nil {
 		fmt.Errorf("failed to fetch tasks: %v", err)
 	}
-	return tasks, nil
+	res := filterTasks(tasks, filter)
+	log.Println(sort, " ", res)
+	if sort == "" {
+		return res, nil
+	} else {
+		mergeSort(res, sort)
+	}
+	return res, nil
 }
+
 func CreateTask(data *sql.DB, task *models.Task, userId int) error {
 	id, timeCr, err := db.CreateTask(data, task, userId)
 	task.Id = id

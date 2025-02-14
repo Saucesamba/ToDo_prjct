@@ -187,10 +187,10 @@ func (h *Handler) GetTasks(w http.ResponseWriter, r *http.Request, params url.Va
 		return
 	}
 
-	//filter := params.Get("filter")
-	//log.Println(filter, userIdInt)
+	filter := params.Get("completed")
+	sort := params.Get("sort")
+	tasks, err := app.GetUserTasks(&h.Repo, userIdInt, sort, filter)
 
-	tasks, err := app.GetUserTasks(&h.Repo, userIdInt)
 	if len(tasks) == 0 {
 		log.Println("No tasks found")
 		w.Header().Set("Content-Type", "application/json")
