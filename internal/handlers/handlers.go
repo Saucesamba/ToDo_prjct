@@ -166,6 +166,8 @@ func (h *Handler) UserInfoHandler(w http.ResponseWriter, r *http.Request) {
 		h.GetInfo(w, r, id)
 	case http.MethodPut:
 		h.UpdateUser(w, r, id)
+	case http.MethodDelete:
+		app.DeleteUser(&h.Repo, id)
 	default:
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
@@ -190,12 +192,13 @@ func (h *Handler) GetTasks(w http.ResponseWriter, r *http.Request, params url.Va
 
 	tasks, err := app.GetUserTasks(&h.Repo, userIdInt)
 	if len(tasks) == 0 {
+		log.Println("No tasks found")
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(models.UsertasksResp{})
 	} else {
 		var taskResp []models.OneTaskResponse
 		for _, task := range tasks {
-			taskResp = append(taskResp, models.OneTaskResponse{Id: task.Id, Description: task.Description, Name: task.Name, Completed: task.Completed})
+			taskResp = append(taskResp, models.OneTaskResponse{Id: task.Id, Description: task.Description, Name: task.Name, Completed: task.Completed, CreatedAt: task.CreatedAt})
 		}
 		if err != nil {
 			http.Error(w, "Unable to find tasks", http.StatusInternalServerError)
@@ -223,14 +226,14 @@ func (h *Handler) CreateTask(w http.ResponseWriter, r *http.Request, userId int)
 	newTask.Name = task.Name
 	newTask.UserId = userId
 	newTask.Completed = false
-
-	err = app.CreateTask(&h.Repo, newTask, userId)
+	err = app.CreateTask(&h.Repo, &newTask, userId)
 	if err != nil {
 		http.Error(w, "Unable to create task", http.StatusInternalServerError)
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	var respTask = models.OneTaskResponse{Id: newTask.Id, Description: newTask.Description, Name: newTask.Name, Completed: newTask.Completed}
+	var respTask = models.OneTaskResponse{Id: newTask.Id, Description: newTask.Description, Name: newTask.Name, Completed: newTask.Completed, CreatedAt: newTask.CreatedAt}
+
 	json.NewEncoder(w).Encode(respTask)
 }
 func (h *Handler) TasksHandler(w http.ResponseWriter, r *http.Request) {

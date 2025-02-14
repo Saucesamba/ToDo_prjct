@@ -71,9 +71,10 @@ func GetUserTasks(data *sql.DB, id int) ([]models.Task, error) {
 	}
 	return tasks, nil
 }
-func CreateTask(data *sql.DB, task models.Task, userId int) error {
-	id, err := db.CreateTask(data, &task, userId)
+func CreateTask(data *sql.DB, task *models.Task, userId int) error {
+	id, timeCr, err := db.CreateTask(data, task, userId)
 	task.Id = id
+	task.CreatedAt = timeCr
 	if err != nil {
 		fmt.Errorf("failed to create task: %v", err)
 	}

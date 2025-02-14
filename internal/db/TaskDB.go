@@ -1,29 +1,24 @@
-// CRUD операции для задач
 package db
 
 import (
 	"MyProject/internal/models"
 	"database/sql"
 	"fmt"
+	"time"
 )
 
-// Функция для создания задачи пользователю. На вход ID пользователя, а также параметры задачи.
-// На выходе id созданной задачи
-func CreateTask(db *sql.DB, task *models.Task, userId int) (int, error) {
-	query := "INSERT INTO tasks (name, description,completed,user_id) VALUES ($1, $2, $3, $4) returning id"
+func CreateTask(db *sql.DB, task *models.Task, userId int) (int, time.Time, error) {
+	query := "INSERT INTO tasks (name, description,completed,user_id) VALUES ($1, $2, $3, $4) returning id,created_at;"
 	var id int
-	err := db.QueryRow(query, task.Name, task.Description, task.Completed, userId).Scan(&id)
+	var createdTime time.Time
+	err := db.QueryRow(query, task.Name, task.Description, task.Completed, userId).Scan(&id, &createdTime)
 	if err != nil {
-		return 0, fmt.Errorf("failed to create task: %w", err)
+		return 0, time.Time{}, fmt.Errorf("failed to create task: %w", err)
 	}
-	return id, nil
+	return id, createdTime, nil
 }
-
-// Функция для получения всех задач пользователя
-// Ищем по связанному ID пользователя
-// На выходе массив всех задач пользователя
 func GetAllTasks(db *sql.DB, id int) ([]models.Task, error) {
-	query := "SELECT id, name, description, completed FROM tasks WHERE user_id = $1;"
+	query := "SELECT * FROM tasks WHERE user_id = $1;"
 	rows, err := db.Query(query, id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query all tasks: %w", err)
@@ -32,7 +27,7 @@ func GetAllTasks(db *sql.DB, id int) ([]models.Task, error) {
 	var tasks []models.Task
 	for rows.Next() {
 		var task models.Task
-		if err := rows.Scan(&task.Id, &task.Name, &task.Description, &task.Completed); err != nil {
+		if err := rows.Scan(&task.Id, &task.Name, &task.Description, &task.Completed, &task.UserId, &task.CreatedAt); err != nil {
 			return nil, fmt.Errorf("failed to scan task: %w", err)
 		}
 		tasks = append(tasks, task)
@@ -42,14 +37,11 @@ func GetAllTasks(db *sql.DB, id int) ([]models.Task, error) {
 	}
 	return tasks, nil
 }
-
-// получение таски по Id
-// На выходе задача пользователя или ошибка
 func GetTaskById(db *sql.DB, id int) (*models.Task, error) {
 	query := "SELECT * FROM tasks WHERE id = $1;"
 	row := db.QueryRow(query, id)
 	task := &models.Task{}
-	err := row.Scan(&task.Id, &task.Name, &task.Description, &task.Completed, &task.UserId)
+	err := row.Scan(&task.Id, &task.Name, &task.Description, &task.Completed, &task.UserId, &task.CreatedAt)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
@@ -58,8 +50,6 @@ func GetTaskById(db *sql.DB, id int) (*models.Task, error) {
 	}
 	return task, nil
 }
-
-// обновление в БД
 func UpdateTask(db *sql.DB, task *models.Task) error {
 	query := "UPDATE tasks SET completed = $1 WHERE id = $2"
 	_, err := db.Exec(query, task.Completed, task.Id)
@@ -68,9 +58,6 @@ func UpdateTask(db *sql.DB, task *models.Task) error {
 	}
 	return nil
 }
-
-// Удаление из БД
-// Также есть проверка на то, что пользователь не может удалять не свою задачу
 func DeleteTask(db *sql.DB, id int) error {
 	query := "DELETE FROM tasks WHERE id = $1;"
 	_, err := db.Exec(query, id)
