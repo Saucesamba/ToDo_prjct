@@ -21,6 +21,7 @@ type OneTaskResponse struct {
 type UsertasksResp struct {
 	Tasks []OneTaskResponse `json:"tasks"`
 }
+
 type TaskReq struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`

@@ -6,7 +6,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"log"
 )
 
 func filterTasks(tasks []models.Task, filter string) []models.Task {
@@ -31,7 +30,7 @@ func filterTasks(tasks []models.Task, filter string) []models.Task {
 }
 
 func mergeSort(tasks []models.Task, sort string) []models.Task {
-	if len(tasks) < 2 {
+	if len(tasks) <= 1 {
 		return tasks
 	}
 	mid := len(tasks) / 2
@@ -39,10 +38,11 @@ func mergeSort(tasks []models.Task, sort string) []models.Task {
 	right := tasks[mid:]
 	return merge(mergeSort(left, sort), mergeSort(right, sort), sort)
 }
-func merge(left []models.Task, right []models.Task, sort string) []models.Task {
-	var li, ri = 0, 0
+func merge(left, right []models.Task, sort string) []models.Task {
+	li := 0
+	ri := 0
 	var res []models.Task
-	for li < len(left) || ri < len(right) {
+	for li < len(left) && ri < len(right) {
 		switch sort {
 		case "asc":
 			{
@@ -75,6 +75,7 @@ func merge(left []models.Task, right []models.Task, sort string) []models.Task {
 		res = append(res, right[ri])
 		ri++
 	}
+
 	return res
 }
 
@@ -140,13 +141,11 @@ func GetUserTasks(data *sql.DB, id int, sort, filter string) ([]models.Task, err
 		fmt.Errorf("failed to fetch tasks: %v", err)
 	}
 	res := filterTasks(tasks, filter)
-	log.Println(sort, " ", res)
 	if sort == "" {
 		return res, nil
-	} else {
-		mergeSort(res, sort)
 	}
-	return res, nil
+	res2 := mergeSort(res, sort)
+	return res2, nil
 }
 
 func CreateTask(data *sql.DB, task *models.Task, userId int) error {
