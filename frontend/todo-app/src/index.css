@@ -1,0 +1,220 @@
+/* Общие стили */
+body {
+  background-color: #e5e9ec;
+  color: #2c2d2e;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  font-family: Roboto, fantasy;
+  font-size: large;
+}
+
+h1, h2 {
+  color: #124555;
+  text-align: center;
+}
+
+.app-name {
+  color: #e4ecf4;
+}
+
+p {
+  line-height: 1.6;
+  text-align: center;
+}
+
+/* Стили для кнопок */
+button {
+  background-color: #325560;
+  color: #e4ecf4;
+  padding: 10px 15px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin: 5px;
+  transition: background-color 0.3s ease;
+}
+button:hover {
+  background-color: #539fb6;
+}
+
+/* Стили для ссылок */
+a {
+  text-decoration: none;
+  color: #88edea;
+}
+a:hover {
+  text-decoration: underline;
+}
+
+/* Стили для формы */
+form {
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  max-width: 400px;
+  margin: 20px auto;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+form div {
+  margin-bottom: 10px;
+}
+
+form label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+  color: #2c2d2e; /* Цвет текста label */
+}
+
+form input[type="text"],
+form input[type="email"],
+form input[type="password"] {
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+form button {
+  display: block;
+  width: 100%;
+  margin-top: auto
+}
+
+/* Стили для сообщений об ошибке */
+.error-message {
+  color: #FF0000; /* Красный цвет для сообщений об ошибке */
+  margin-top: 10px;
+  text-align: center;
+  font-weight: bold;
+}
+
+/* стили для навбара */
+.nav-buttons-container {
+  display: flex;
+  justify-content: center;
+  margin: 20px 0;
+}
+
+/* Стили для списков */
+ul {
+  list-style: none;
+  padding: 0;
+}
+
+li {
+  background-color: #fff;
+  padding: 10px;
+  margin: 5px 0;
+  border-radius: 5px;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+}
+
+.app-container {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+  padding: 20px;
+  box-sizing: border-box;
+  min-height: calc(100vh);
+  margin-bottom: 10px
+}
+
+
+.app-header {
+  background-color:  #124555;
+  color: #e4ecf4;
+  padding: 10px 5px;
+  width: 100%;
+  box-sizing: border-box;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.auth-buttons {
+  display: flex;
+  align-items: center;
+}
+
+.home-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  padding: 20px;
+}
+
+.home-section {
+  display: flex;
+  align-items: center;
+  justify-content: space-around; /* Размещает элементы по краям и равномерно распределяет пространство */
+  margin-bottom: 30px;
+  width: 100%;
+  box-sizing: border-box; /* Важно для учета padding */
+  padding: 20px; /* Добавляем отступы для каждой секции */
+}
+
+.home-image {
+  width: 40%; /* Ширина изображения */
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.home-text {
+  width: 50%; /* Ширина текстового блока */
+  padding: 20px;
+  box-sizing: border-box;
+  text-align: left;
+}
+
+.home-text h3 {
+  margin-bottom: 10px;
+  color: #206175;
+}
+
+/* Стили для футера */
+.app-footer {
+
+  position: static;
+  background-color: #124555;
+  color: #e4ecf4;
+  width: 100%; /* Футер занимает всю ширину */
+  box-sizing: border-box;
+  padding: 20px;
+  margin-top: auto;
+  box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.footer-content {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 20px;
+}
+
+.footer-section {
+  width: 30%;
+  text-align: left;
+}
+
+.footer-bottom {
+  text-align: center;
+  border-top: 1px solid #ddd;
+  padding-top: 10px;
+}
